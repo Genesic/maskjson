@@ -7,21 +7,25 @@ import (
 	"strings"
 )
 
-type Mask struct {
+type MaskEncoder interface {
+	Marshal(v interface{}) ([]byte, error)
+}
+
+type mask struct {
 	fullMask    bool
 	atLeastStar int
 }
 
-func NewMask(fullMask bool, atLeastStar uint) *Mask {
-	return &Mask{fullMask, int(atLeastStar)}
+func NewMask(fullMask bool, atLeastStar uint) MaskEncoder {
+	return &mask{fullMask, int(atLeastStar)}
 }
 
-func (m *Mask) Marshal(v interface{}) ([]byte, error) {
+func (m *mask) Marshal(v interface{}) ([]byte, error) {
 	masked := m.maskStruct(reflect.ValueOf(v))
 	return json.Marshal(masked)
 }
 
-func (m *Mask) maskStruct(val reflect.Value) interface{} {
+func (m *mask) maskStruct(val reflect.Value) interface{} {
 	if val.Kind() == reflect.Ptr {
 		if val.IsNil() {
 			return nil
@@ -149,7 +153,7 @@ func isEmptyValue(v reflect.Value) bool {
 	return false
 }
 
-func (m *Mask) maskValue(val reflect.Value) interface{} {
+func (m *mask) maskValue(val reflect.Value) interface{} {
 	if !val.IsValid() {
 		return strings.Repeat("*", m.atLeastStar)
 	}
