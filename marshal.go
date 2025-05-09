@@ -29,6 +29,10 @@ func (m *Mask) maskStruct(val reflect.Value) interface{} {
 		val = val.Elem()
 	}
 
+	if !val.IsValid() {
+		return nil
+	}
+
 	if val.Kind() != reflect.Struct {
 		return val.Interface()
 	}
@@ -95,10 +99,14 @@ func (m *Mask) maskStruct(val reflect.Value) interface{} {
 
 		case reflect.Interface:
 			if omitEmpty && fieldVal.IsNil() {
-				result[fieldName] = nil
 				continue
 			}
 			inner := fieldVal.Elem()
+			if !inner.IsValid() {
+				result[fieldName] = nil
+				continue
+			}
+
 			if omitEmpty && isEmptyValue(inner) {
 				continue
 			}
